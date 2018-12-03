@@ -60,8 +60,13 @@ class OracleInit(QThread):
             else:
                 if key == 'IRN':
                     in_p = ','.join(keyword)
-                    sql = "select irn,mrid,name  from {table} where {key} in ( {in_p})" \
-                        .format(table=table, key=key, in_p=in_p)
+                    if self.window.checkBox_2.isChecked():
+                        table ='sys_indicators_data'
+                        sql = "select *  from {table} where {key} in ( {in_p})" \
+                            .format(table=table, key=key, in_p=in_p)
+                    else:
+                        sql = "select irn,mrid,name  from {table} where {key} in ( {in_p})" \
+                            .format(table=table, key=key, in_p=in_p)
                 else:
                     if key == 'MRID' and 'ZB-' not in keyword[0]:
                         keyword = ['ZB-' + key for key in keyword]
@@ -76,8 +81,9 @@ class OracleInit(QThread):
                 self.window.append_log("执行查询SQL:{}".format(sql))
                 return result
             else:
-                self.window.append_log("获取不到curso！")
+                self.window.append_log("获取不到cursor！")
         else:
+            self.window.sendmsg.emit(0)
             self.window.append_log("当前查询参数为空！")
 
     def run(self):
@@ -91,8 +97,12 @@ class OracleInit(QThread):
                 for col in range(column_num):
                     temp_data = fetch_result[row][col]
                     data = QStandardItem(str(temp_data))
-                    self.window.model.setItem(row,col,data)
+                    if self.window.checkBox_2.isChecked():
+                        self.window.data_model.setItem(row, col, data)
+                    else:
+                        self.window.model.setItem(row,col,data)
         else:
+            self.window.sendmsg2.emit(0)
             self.window.append_log("can't get result,check your sql expression")
 
 

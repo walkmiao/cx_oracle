@@ -5,7 +5,7 @@
 # @Site    : 
 # @File    : test.py
 # @Software: PyCharm
-from myUI import Ui_MainWindow
+from oracle_query import Ui_MainWindow
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
@@ -15,6 +15,7 @@ from config import *
 import sys
 import time
 import xlrd, xlwt
+from handleItem import HandleItem
 
 
 class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -25,16 +26,32 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MyWindow, self).__init__()
         self.setupUi(self)
         # 根据模板生成后自己再做一些自定义
+        self.setWindowTitle('长源数据库查询')
         self.model = QStandardItemModel()  # tableview的model
         self.model.setHorizontalHeaderLabels(['IRN', 'MRID', 'NAME'])
         self.tableView.horizontalHeader().setStretchLastSection(True)  # 水平方向标签拓展剩下的窗口部分，填满表格
-        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)  # 水平方向，表格大小拓展到适当的尺寸
-        self.tableView.setModel(self.model)  # 实现和model的绑定
-        self.log_mode = QStandardItemModel()
-        self.log_mode.setHorizontalHeaderLabels(['时间', '事件'])
-        self.tableView_2.setModel(self.log_mode)
+        # self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)  # 水平方向，表格大小拓展到适当的尺寸
+
+        self.log_model = QStandardItemModel()
+        self.log_model.setHorizontalHeaderLabels(['时间', '事件'])
+        self.tableView_2.setModel(self.log_model)
+        self.data_model = QStandardItemModel()
+        self.data_model.setHorizontalHeaderLabels(['IRN', 'DATA_TIME', 'DATA_VALUE', 'LAST_MODIFY_DATE'])
         self.tableView_2.horizontalHeader().setStretchLastSection(True)  # 水平方向标签拓展剩下的窗口部分，填满表格
         self.tableView_2.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)  # 水平方向，表格大小拓展到适当的尺寸
+
+        self.factory_model = QStandardItemModel()
+        self.item_model = QStandardItemModel()
+
+        self.tableView_3.setModel(self.factory_model)
+        self.tableView_4.setModel(self.item_model)
+        self.tableView_3.horizontalHeader().setStretchLastSection(True)
+        self.tableView_4.horizontalHeader().setStretchLastSection(True)
+        self.handle_item_ins = HandleItem(self)
+        self.handle_item_ins.handle_item()
+
+    def handle_item_excel(self):
+        self.handle_item_ins.handle_item()
 
     def get_time(self):
         t = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
@@ -43,7 +60,13 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def sql_query(self):
         self.append_log("当前通过查询框输入获取输出结果！")
         self.model.clear()
-        self.model.setHorizontalHeaderLabels(['IRN', 'MRID', 'NAME'])
+        self.data_model.clear()
+        if not self.checkBox_2.isChecked():
+            self.model.setHorizontalHeaderLabels(['IRN', 'MRID', 'NAME'])
+            self.tableView.setModel(self.model)  # 实现和model的绑定
+        else:
+            self.data_model.setHorizontalHeaderLabels(['IRN', 'DATA_TIME', 'DATA_VALUE', 'LAST_MODIFY_DATE'])
+            self.tableView.setModel(self.data_model)
         # try:
         #     self.statusbar.showMessage("正在连接数据库de3db....")
         #     self.ora_ins = OracleInit(self, table=table, user=user, pwd=pwd, host=host, service_name=sid)
@@ -119,7 +142,7 @@ class MyWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return
 
     def append_log(self, param):
-        self.log_mode.appendRow([QStandardItem(self.get_time()), QStandardItem(param)])
+        self.log_model.appendRow([QStandardItem(self.get_time()), QStandardItem(param)])
 
     def open_file(self):
         # 从C盘打开文件格式（*.jpg *.gif *.png *.xls）文件，返回路径
